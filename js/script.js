@@ -27,11 +27,7 @@ function initializePath() {
     path.fullySelected = true;
 }
 
-//canvas.on( "mousemove", function( event ) {
-//    canvasX = event.pageX;
-//    canvasY = event.pageY;
-//    $(".current").html("X: " + canvasX + "<br/>Y: " + canvasY + "<hr/>");
-//});
+
 
 function onMouseMove(event) {
     mousePos = event.point;

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/browser.js"></script>
+    <script type="text/javascript" src="js/jquery.svg.js"></script>
+    <script type="text/javascript" src="js/jquery.svganim.min.js"></script>
+
+
+    <style>
+        .tools {
+            position: absolute;
+            right: 0;
+            top: 0;
+            padding: 5px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        svg {
+            width: 100%;
+        }
+
+        svg rect {
+            fill: #ccc;
+            transition: all 0.5s;
+        }
+
+        svg rect:hover {
+            fill: #f1f1f1;
+            opacity: 0.7;
+            transition: fill 0.5s;
+        }
+
+        .new {
+            cursor: copy;
+        }
+
+        .delete {
+            cursor: not-allowed;
+        }
+
+        .move {
+            cursor: cell;
+        }
+
+        .rotate {
+            cursor: ns-resize;
+        }
+
+        .noselect {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+<script>
+    $(function() {
+        var canvas = $(".canvas");
+        canvas.svg();
+        var svg = canvas.svg("get");
+        var width = 35;
+        var height = 35;
+        var strokeWidth = 1;
+        var fillColor = "#ccc";
+        var strokeColor = "#000";
+        var rect;
+        var tool = "new";
+        var count = 0;
+        var target;
+        var noTarget;
+        var drag = false;
+        var mY = canvas.height()/2;
+
+        svg.load("manage.svg", {changeSize: false});
+
+        canvas.on( "mousemove", function( e ) {
+            var offSet = $(this).offset();
+            canvasX = e.pageX - offSet.left;
+            canvasY = e.pageY - offSet.top;
+        });
+
+        canvas.on("click", function() {
+            switch (tool) {
+                case "new":
+                    toolNew();
+                    break;
+                case "delete":
+                    toolDelete(target, noTarget);
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        canvas.on("mousedown", function(e) {
+            getTarget(e);
+            drag = true;
+            canvas.on("mousemove", function(e) {
+                if(drag == true) {
+                    switch (tool) {
+                        case "move":
+                            toolMove(target, noTarget);
+                            break;
+                        case "rotate":
+                            if (e.pageY < mY) {
+                                mY = e.pageY;
+                                var direction = "up";
+                            } else if(e.pageY > mY) {
+                                mY = e.pageY;
+                                var direction = "down";
+                            }
+                            toolRotate(target, noTarget, direction);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            });
+        });
+
+
+        canvas.on("mouseup", function(e) {
+           drag = false;
+            switch (tool) {
+                case "rotate":
+            }
+        });
+
+        function getTarget(e) {
+            target = $(e.target);
+            if(target.context.className.baseVal == 'rect') {
+                noTarget = false;
+            } else {
+                noTarget = true;
+            }
+        }
+
+        function toolNew() {
+            count = count + 1;
+            rect = svg.rect((canvasX - (width / 2)), (canvasY - (height / 2)), width, height, {fill: fillColor, stroke: strokeColor, strokeWidth: strokeWidth, transform: 'rotate(0) translate(0 0)', class: 'rect', id: count});
+        }
+
+        function toolDelete(target, noTarget) {
+            if(noTarget == true) {
+                return;
+            }
+            target.remove();
+        }
+
+        function toolMove(target, noTarget) {
+            if(noTarget == true) {
+                return;
+            }
+            var x = getX(target) + (width / 2);
+            var y = getY(target) + (height / 2);
+            var angle = target[0].transform.baseVal[0].angle;
+            svg.change(target[0], {transform: 'rotate('+angle+','+x+','+y+')'});
+            target.context.x.baseVal.value = (canvasX - (width / 2));
+            target.context.y.baseVal.value = (canvasY - (height / 2));
+        }
+
+        function toolRotate(target, noTarget, direction) {
+            if(noTarget == true) {
+                return;
+            }
+            var x = getX(target) + (width / 2);
+            var y = getY(target) + (height / 2);
+            if(direction == "up") {
+                var angle = target[0].transform.baseVal[0].angle + 2;
+                svg.change(target[0], {transform: 'rotate('+angle+','+x+','+y+')'});
+            } else if (direction == "down") {
+                var angle = target[0].transform.baseVal[0].angle - 2;
+                svg.change(target[0], {transform: 'rotate('+angle+','+x+','+y+')'});
+            }
+        }
+
+        function getX(elm) {
+            return elm.context.x.baseVal.value;
+        }
+
+        function getY(elm) {
+            return elm.context.y.baseVal.value;
+        }
+
+
+        $(".tools div").click(function() {
+           $(".tools div").attr("style", "");
+            $(this).attr("style","text-decoration: underline");
+            canvas.removeClass(tool);
+            tool = $(this).data("tool");
+            canvas.addClass(tool);
+        });
+    });
+</script>
+<div class="tools">
+    <div class="tool" data-tool="new" style="text-decoration: underline;">New</div>
+    <div class="tool" data-tool="delete">Delete</div>
+    <div class="tool" data-tool="move">Move</div>
+    <div class="tool" data-tool="rotate">Rotate</div>
+</div>
+    <div class="wrapper noselect" style="max-width: 800px;">
+        <div class="canvas noselect" resize style="width: 100%; height: 600px; border:1px solid #ccc;">
+
+        </div>
+    </div>
+</body>
+</html>
